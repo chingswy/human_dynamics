@@ -56,6 +56,10 @@ flags.DEFINE_boolean(
     'If True, trims the first and last couple of frames for which the temporal'
     'encoder doesn\'t see full fov.'
 )
+flags.DEFINE_boolean(
+    'render', False,
+    'If True, render the images.'
+)
 
 
 def get_labels_poseflow(json_path, num_frames, min_kp_count=20):
@@ -143,20 +147,22 @@ def predict_on_tracks(model, img_dir, poseflow_path, output_path, track_id,
     print('----------')
     print('Preprocessing frames.')
     print('----------')
-
-    for i in range(min_f, max_f):
-        proc_params = process_image(
-            im_path=im_paths[i],
-            bbox_param=bbox_params_smooth[i],
-        )
-        images.append(proc_params.pop('image'))
-        images_orig.append(proc_params)
+    from tqdm import tqdm
+    pred_path = osp.join(output_path, 'hmmr_output.pkl')
+    if not osp.exists(pred_path):
+        for i in tqdm(range(min_f, max_f)):
+            proc_params = process_image(
+                im_path=im_paths[i],
+                bbox_param=bbox_params_smooth[i],
+            )
+            images.append(proc_params.pop('image'))
+            if config.render:
+                images_orig.append(proc_params)
 
     if track_id > 0:
         output_path += '_{}'.format(track_id)
 
     mkdir(output_path)
-    pred_path = osp.join(output_path, 'hmmr_output.pkl')
     if osp.exists(pred_path):
         print('----------')
         print('Loading pre-computed prediction.')
@@ -181,14 +187,15 @@ def predict_on_tracks(model, img_dir, poseflow_path, output_path, track_id,
     print('----------')
     print('Rendering results to {}.'.format(output_path))
     print('----------')
-    render_preds(
-        output_path=output_path,
-        config=config,
-        preds=preds,
-        images=images,
-        images_orig=images_orig,
-        trim_length=trim_length,
-    )
+    if config.render:
+        render_preds(
+            output_path=output_path,
+            config=config,
+            preds=preds,
+            images=images,
+            images_orig=images_orig,
+            trim_length=trim_length,
+        )
 
 
 def run_on_video(model, vid_path, trim_length):
@@ -204,7 +211,7 @@ def run_on_video(model, vid_path, trim_length):
     # See extract_tracks.py
     poseflow_path, img_dir = compute_tracks(vid_path, config.track_dir)
 
-    vid_name = osp.basename(vid_path).split('.')[0]
+    vid_name = '.'.join(osp.basename(vid_path).split('.')[:-1])
     out_dir = osp.join(config.out_dir, vid_name, 'hmmr_output')
 
     predict_on_tracks(

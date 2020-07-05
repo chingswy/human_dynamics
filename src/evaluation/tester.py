@@ -276,17 +276,23 @@ class Tester(object):
         T = self.sequence_length
         N = len(all_images)
         H, W = self.img_size, self.img_size
-
         # Need margin on both sides. Num good frames = T - 2 * margin.
         margin = (self.fov - 1) // 2
         g = self.sequence_length - 2 * margin
         count = np.ceil(N / (g * B)).astype(int)
         num_fill = count * B * g + T - N
+        pad_front = np.zeros((margin, H, W, 3))
+        for i in range(margin):
+            pad_front[i] = all_images[0]
+        pad_back = np.zeros((num_fill, H, W, 3))
+        for i in range(num_fill):
+            pad_back[i] = all_images[-1]
         images_padded = np.concatenate((
-            np.zeros((margin, H, W, 3)),             # Front padding.
+            pad_front,             # Front padding.
             all_images,
-            np.zeros((num_fill, H, W, 3)),           # Back padding.
+            pad_back,           # Back padding.
         ), axis=0)
+
         images_batched = []
         # [ m ][    g    ][ m ]             Slide over by g every time.
         #            [ m ][    g    ][ m ]

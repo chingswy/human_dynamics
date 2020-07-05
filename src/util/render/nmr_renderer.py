@@ -149,7 +149,7 @@ class VisRenderer(object):
             rend = torch.unsqueeze(rend, 0)
             rend = rend.repeat(1, 3, 1, 1)
         else:
-            rend = self.renderer.render(proj_verts, faces, texture)
+            rend, _, _ = self.renderer.render(proj_verts, faces, texture)
 
         rend = rend.data.cpu().numpy().transpose((0, 2, 3, 1))
         rend = np.clip(rend, 0, 1) * 255.0

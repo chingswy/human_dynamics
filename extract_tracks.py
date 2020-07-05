@@ -132,7 +132,7 @@ def compute_tracks(vid_path, out_dir):
     2. Call AlphaPose on these frames.
     3. Call PoseFlow on the output of 2.
     """
-    vid_name = osp.basename(vid_path).split('.')[0]
+    vid_name = '.'.join(osp.basename(vid_path).split('.')[:-1])
 
     # Where to save all intermediate outputs in.
     vid_dir = osp.abspath(osp.join(out_dir, vid_name))
