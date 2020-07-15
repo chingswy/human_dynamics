@@ -12,11 +12,7 @@ import numpy as np
 from skimage.io import imread
 from tqdm import tqdm
 
-from src.util.render.nmr_renderer import (
-    VisRenderer,
-    visualize_img,
-    visualize_img_orig,
-)
+
 from src.util.common import resize_img
 from src.util.smooth_bbox import get_smooth_bbox_params
 
@@ -118,6 +114,11 @@ def render_preds(output_path, config, preds, images, images_orig, trim_length,
 
     images are preprocessed to be [-1, 1]
     """
+    from src.util.render.nmr_renderer import (
+        VisRenderer,
+        visualize_img,
+        visualize_img_orig,
+    )
     renderer = VisRenderer(img_size=img_size)
     renderer_crop = VisRenderer(img_size=img_size)
 
