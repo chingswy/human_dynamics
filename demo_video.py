@@ -81,14 +81,21 @@ def get_labels_poseflow(json_path, num_frames, min_kp_count=20):
     with open(json_path, 'r') as f:
         data = json.load(f)
     if len(data.keys()) != num_frames:
-        print('Not all frames have people detected in it.')
+        print('Not all frames have people detected in it!')
+        for i in range(num_frames):
+            key = 'frame%08d.png'%(i)
+            if key not in data.keys():
+                print('>>> missing {}'.format(key))
+                # complete the keypoints detection with former frame
+                data[key] = data['frame%08d.png'%(i-1)]                
         frame_ids = [int(re.findall(r'\d+', img_name)[0])
                      for img_name in sorted(data.keys())]
         if frame_ids[0] != 0:
             print('PoseFlow did not find people in the first frame. '
                   'Needs testing.')
             ipdb.set_trace()
-
+    with open(json_path.replace('.json', '')+'.complete.json', 'w') as f:
+        json.dump(data, f, indent=4)
     all_kps_dict = {}
     all_kps_count = {}
     for i, key in enumerate(sorted(data.keys())):
@@ -129,6 +136,7 @@ def predict_on_tracks(model, img_dir, poseflow_path, output_path, track_id,
                       trim_length):
     # Get all the images
     im_paths = sorted(glob(osp.join(img_dir, '*.png')))
+    print('>>> {} images in path {}'.format(len(im_paths), img_dir))
     all_kps = get_labels_poseflow(poseflow_path, len(im_paths))
 
     # Here we set which track to use.
@@ -138,6 +146,7 @@ def predict_on_tracks(model, img_dir, poseflow_path, output_path, track_id,
     kps = all_kps[track_id]
 
     bbox_params_smooth, s, e = get_smooth_bbox_params(kps, vis_thresh=0.1)
+    print('>>> bbox: {}, e={}, kps: {}'.format(bbox_params_smooth.shape, e, len(kps)))
 
     images = []
     images_orig = []
